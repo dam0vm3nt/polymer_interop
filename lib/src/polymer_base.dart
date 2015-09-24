@@ -311,8 +311,21 @@ abstract class PolymerBase implements CustomElementProxyMixin {
   void updateStyles() => jsElement.callMethod('updateStyles');
 
   /// Sets a value on an attribute path, and notifies of changes.
-  void set(String path, value) =>
-      jsElement.callMethod('set', [path, jsValue(value)]);
+  void set(String path, value,{bool disableSync:false}) => _checkSyncFlag(disableSync,() =>jsElement.callMethod('set', [path, jsValue(value)]) );
+
+
+  _checkSyncFlag(bool disableSync,Function f) {
+    if (disableSync) {
+      try {
+        jsElement["__DISABLE_SYNC__"]=1;
+        return f();
+      } finally {
+        jsElement["__DISABLE_SYNC__"]=0;
+      }
+    } else {
+      return f();
+    }
+  }
 
   /// Add `item` to a list at `path`.
   void add(String path, item) {
@@ -351,9 +364,9 @@ abstract class PolymerBase implements CustomElementProxyMixin {
   }
 
   /// Inserts `elements` at position `index` to the list at `path`.
-  void insertAll(String path, int index, Iterable elements) {
-    jsElement.callMethod('splice',
-        [path, index, 0]..addAll(elements.map((element) => jsValue(element))));
+  void insertAll(String path, int index, Iterable elements,{bool disableSync:false}) {
+    _checkSyncFlag(disableSync,()=>jsElement.callMethod('splice',
+    [path, index, 0]..addAll(elements.map((element) => jsValue(element)))));
   }
 
   /// Removes the first occurrence of `value` from the list at `path`.
@@ -383,8 +396,8 @@ abstract class PolymerBase implements CustomElementProxyMixin {
 
   /// Removes the objects in the range `start` inclusive to `end` exclusive from
   /// the list at `path`.
-  void removeRange(String path, int start, int end) {
-    jsElement.callMethod('splice', [path, start, end - start]);
+  void removeRange(String path, int start, int end,{bool disableSync:false}) {
+    _checkSyncFlag(disableSync,() => jsElement.callMethod('splice', [path, start, end - start]));
   }
 
   /// Removes all objects from the list at `path` that satisfy `test`.
