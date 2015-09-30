@@ -78,8 +78,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
        * @return {boolean} Returns true if notification actually took place,
        *   based on a dirty check of whether the new value was already known.
       */
-      notifyPath: function(path, value, fromAbove) {
-        var old = this._propertySetter(path, value);
+      notifyPath: function(path, value, fromAbove,origPath) {
+        console.log("POLY NP:"+origPath+" / "+path);
+        var old = this._propertySetter(path, value,null,false,origPath);
+        console.log("POLY NP: END");
         // manual dirty checking for now...
         // NaN is always not equal to itself,
         // if old and value are both NaN we treat them as equal
@@ -88,10 +90,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           // console.group((this.localName || this.dataHost.id + '-' + this.dataHost.dataHost.index) + '#' + (this.id || this.index) + ' ' + path, value);
           // Take path effects at this level for exact path matches,
           // and notify down for any bindings to a subset of this path
-          this._pathEffector(path, value);
+          console.log("START EFFE");
+          this._pathEffector(path, value,origPath);
           // Send event to notify the path change upwards
           // Optimization: don't notify up if we know the notification
           // is coming from above already (avoid wasted event dispatch)
+          console.log("END EFFE");
           if (!fromAbove) {
             // TODO(sorvell): should only notify if notify: true?
             this._notifyPath(path, value);
@@ -166,7 +170,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
           prop[last] = value;
           if (!root) {
-            this.notifyPath(parts.join('.'), value);
+            this.notifyPath(parts.join('.'), value,false, path);
           }
         } else {
           prop[path] = value;
@@ -205,7 +209,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return prop[last];
       },
 
-      _pathEffector: function(path, value) {
+      _pathEffector: function(path, value,origPath) {
         // get root property
         var model = this._modelForPath(path);
         // search property effects of the root property for 'annotation' effects
@@ -214,7 +218,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           fx$.forEach(function(fx) {
             var fxFn = this['_' + fx.kind + 'PathEffect'];
             if (fxFn) {
-              fxFn.call(this, path, value, fx.effect);
+              console.log("FX : "+fxFn);
+              fxFn.call(this, path, value, fx.effect,origPath);
             }
           }, this);
         }
@@ -224,7 +229,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       },
 
-      _annotationPathEffect: function(path, value, effect) {
+      _annotationPathEffect: function(path, value, effect,origPath) {
+        console.log("ANNO EFFE 2: "+origPath+" / "+path);
         if (effect.value === path || effect.value.indexOf(path + '.') === 0) {
           // TODO(sorvell): ideally the effect function is on this prototype
           // so we don't have to call it like this.
@@ -234,14 +240,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var node = this._nodes[effect.index];
           if (node && node.notifyPath) {
             var p = this._fixPath(effect.name , effect.value, path);
-            node.notifyPath(p, value, true);
+            node.notifyPath(p, value, true,origPath);
           }
         }
       },
 
-      _complexObserverPathEffect: function(path, value, effect) {
+      _complexObserverPathEffect: function(path, value, effect,origPath) {
         if (this._pathMatchesEffect(path, effect)) {
-          Polymer.Bind._complexObserverEffect.call(this, path, value, effect);
+          Polymer.Bind._complexObserverEffect.call(this, path, value, effect,origPath);
         }
       },
 

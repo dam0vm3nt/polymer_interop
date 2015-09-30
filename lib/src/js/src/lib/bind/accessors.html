@@ -43,18 +43,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       // Called from accessors, where effects is pre-stored
       // in the closure for the accessor for efficiency
-      _propertySetter: function(property, value, effects, fromAbove) {
+      _propertySetter: function(property, value, effects, fromAbove,origPath) {
         var old = this.__data__[property];
         // NaN is always not equal to itself,
         // if old and value are both NaN we treat them as equal
         // x === x is 10x faster, and equivalent to !isNaN(x)
+        console.log("PROP SET :"+origPath+ " / "+property+ " / eff"+effects+" abo "+fromAbove);
         if (old !== value && (old === old || value === value)) {
           this.__data__[property] = value;
           if (typeof value == 'object') {
             this._clearPath(property);
           }
           if (this._propertyChanged) {
-            this._propertyChanged(property, value, old);
+            this._propertyChanged(property, value, old,origPath);
           }
           if (effects) {
             this._effectEffects(property, value, effects, old, fromAbove);

@@ -20,7 +20,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
              ;
     },
 
-    _annotationEffect: function(source, value, effect) {
+    _annotationEffect: function(source, value, effect,_,origPath) {
+      console.log("Anno EFFE : "+origPath+ " / "+source);
       if (source != effect.value) {
         value = this.get(effect.value);
         this.__data__[effect.value] = value;
@@ -59,10 +60,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     },
 
-    _complexObserverEffect: function(source, value, effect) {
+    _complexObserverEffect: function(source, value, effect,origPath) {
+      console.log("COMPLEX OBS: "+origPath);
       var fn = this[effect.method];
       if (fn) {
-        var args = Polymer.Bind._marshalArgs(this.__data__, effect, source, value);
+        console.log("Complex obx FN :"+fn);
+        var args = Polymer.Bind._marshalArgs(this.__data__, effect, source, value,origPath);
         if (args) {
           fn.apply(this, args);
         }
